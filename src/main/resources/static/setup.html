@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Trị Giải Đấu - Viễn Thông Cup</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        .step-card { border-left: 5px solid #0d6efd; margin-bottom: 20px; transition: transform 0.2s; }
+        .step-card:hover { transform: translateY(-3px); }
+        .status-box { padding: 15px; border-radius: 8px; background: #e9ecef; min-height: 60px; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+
+<body class="bg-light pb-5">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">🏆 Viễn Thông Cup</a>
+            <div>
+                <a href="index.html" class="btn btn-outline-light me-2">📊 Bảng Xếp Hạng</a>
+                <a href="bracket.html" class="btn btn-outline-warning me-2">⚔️ Knockout</a>
+                <a href="setup.html" class="btn btn-primary">⚙️ Quản Trị</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2 class="text-center text-primary mb-4">🏆 Bảng Điều Khiển Ban Tổ Chức</h2>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card shadow step-card">
+                    <div class="card-body">
+                        <h4 class="text-primary">Bước 1: Bốc Thăm & Chia Bảng</h4>
+                        <p class="text-muted small">Lấy đội từ Database → random → chia bảng.</p>
+                        <hr>
+                        <div class="mb-3">
+                            <label class="fw-bold">Số bảng:</label>
+                            <input type="number" id="numGroups" class="form-control" value="4" min="2" max="8">
+                        </div>
+                        <button onclick="runAutoGroup()" class="btn btn-primary w-100 fw-bold">
+                            1. Chia bảng
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow step-card" style="border-left-color: #198754;">
+                    <div class="card-body">
+                        <h4 class="text-success">Bước 2: Sinh Lịch & Chạy Demo</h4>
+                        <p class="text-muted small">Round-robin tự động & Giả lập kết quả.</p>
+                        <hr>
+                        <button onclick="runGenerateSchedule()" class="btn btn-success w-100 fw-bold">
+                            2. Tạo lịch thi đấu
+                        </button>
+                        
+                        <button onclick="runMockData()" class="btn btn-warning w-100 fw-bold mt-3 border border-dark">
+                            ⏩ Chạy Demo Vòng Bảng (Random Tỉ số)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6 offset-md-3">
+                <div class="card shadow step-card" style="border-left-color: #dc3545;">
+                    <div class="card-body text-center">
+                        <h4 class="text-danger">Bước 3: Xem Knockout</h4>
+                        <p class="text-muted small">Sau khi nhập điểm → vào vòng loại trực tiếp</p>
+                        <hr>
+                        <a href="bracket.html" class="btn btn-danger w-100 fw-bold">
+                            ⚔️ Đi tới Vòng Knockout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-8 offset-md-2">
+                <div id="statusMessage" class="status-box fs-5 fw-bold text-secondary shadow-sm">
+                    Trạng thái: Đang chờ lệnh...
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_BASE = "http://localhost:8082/api/tournament";
+
+        function showStatus(text, colorClass) {
+            const box = document.getElementById('statusMessage');
+            box.innerHTML = text;
+            box.className = `status-box fs-5 fw-bold shadow-sm ${colorClass}`;
+        }
+
+        function runAutoGroup() {
+            const num = document.getElementById('numGroups').value;
+            showStatus("⏳ Đang chia bảng...", "text-warning");
+            
+            fetch(`${API_BASE}/auto-group-db?numGroups=${num}`, { method: 'POST' })
+                .then(async res => {
+                    const msg = await res.text();
+                    if (res.ok) showStatus("✅ " + msg, "text-primary");
+                    else showStatus("❌ " + msg, "text-danger");
+                })
+                .catch(() => showStatus("❌ Không kết nối được server!", "text-danger"));
+        }
+
+        function runGenerateSchedule() {
+            showStatus("⏳ Đang tạo lịch...", "text-warning");
+            
+            fetch(`${API_BASE}/generate-schedule`, { method: 'POST' })
+                .then(async res => {
+                    const msg = await res.text();
+                    if (res.ok) showStatus("✅ " + msg, "text-success");
+                    else showStatus("❌ " + msg, "text-danger");
+                })
+                .catch(() => showStatus("❌ Không kết nối được server!", "text-danger"));
+        }
+
+        // HÀM MỚI: CHẠY DEMO RANDOM TỈ SỐ
+        function runMockData() {
+            if(confirm("Hành động này sẽ TỰ ĐỘNG điền kết quả ngẫu nhiên cho toàn bộ các trận Vòng bảng đang chờ. Bạn có chắc chắn không?")) {
+                showStatus("⏳ Đang đá tự động... Vui lòng chờ...", "text-warning");
+                
+                fetch(`${API_BASE}/mock-group-stage`, { method: 'POST' })
+                    .then(async res => {
+                        const msg = await res.text();
+                        if (res.ok) showStatus("✅ " + msg, "text-success");
+                        else showStatus("❌ " + msg, "text-danger");
+                    })
+                    .catch(() => showStatus("❌ Không kết nối được server!", "text-danger"));
+            }
+        }
+    </script>
+
+</body>
+</html>

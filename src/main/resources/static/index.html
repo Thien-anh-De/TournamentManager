@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Viễn Thông Cup 2026</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light pb-5">
+
+<nav class="navbar navbar-dark bg-dark shadow">
+    <div class="container">
+        <span class="navbar-brand fw-bold">🏆 Viễn Thông Cup</span>
+        <div>
+            <a href="index.html" class="btn btn-primary me-2">📊 Ranking</a>
+            <a href="schedule.html" class="btn btn-info me-2 text-white fw-bold">📅 Lịch Thi Đấu</a>
+            <a href="bracket.html" class="btn btn-outline-warning me-2">⚔️ Knockout</a>
+            <a href="players.html" class="btn btn-outline-danger me-2">🏃 Cầu Thủ</a>
+            <a href="setup.html" class="btn btn-outline-light">⚙️ Quản Trị</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <h1 class="text-center text-primary mb-5">🏆 BẢNG XẾP HẠNG VÒNG BẢNG</h1>
+    
+    <div id="ranking-container" class="row">
+        </div>
+</div>
+
+<script>
+fetch("http://localhost:8082/api/tournament/ranking")
+    .then(res => res.json())
+    .then(data => {
+        // TỰ ĐỘNG GOM NHÓM: Có bao nhiêu bảng tự tạo bấy nhiêu nhóm
+        const groups = {};
+        data.forEach(team => {
+            const gName = team.groupName || 'Chưa chia bảng';
+            if (!groups[gName]) {
+                groups[gName] = [];
+            }
+            groups[gName].push(team);
+        });
+
+        // Sắp xếp tên bảng theo thứ tự A, B, C...
+        const sortedGroupNames = Object.keys(groups).sort();
+
+        const container = document.getElementById('ranking-container');
+        container.innerHTML = '';
+
+        // Tự động vẽ HTML cho từng bảng
+        sortedGroupNames.forEach(groupName => {
+            const teams = groups[groupName];
+            let rowsHtml = '';
+            
+            teams.forEach((team, index) => {
+                let rowClass = (index < 2) ? 'table-warning fw-bold' : ''; 
+                rowsHtml += `
+                <tr class="${rowClass}">
+                    <td>${index + 1}</td>
+                    <td class="text-start text-primary fw-bold">${team.name}</td>
+                    <td>${team.matchesPlayed}</td>
+                    <td>${team.goalDifference > 0 ? '+' + team.goalDifference : team.goalDifference}</td>
+                    <td class="text-danger fw-bold">${team.points}</td>
+                </tr>`;
+            });
+
+            const tableHtml = `
+            <div class="col-md-6 mb-4">
+                <div class="card shadow h-100 border-0">
+                    <div class="card-header bg-primary text-white text-center fw-bold fs-5">
+                        ${groupName}
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover text-center align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr><th>#</th><th>ĐỘI BÓNG</th><th>TRẬN</th><th>HS</th><th>ĐIỂM</th></tr>
+                            </thead>
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>`;
+            container.innerHTML += tableHtml;
+        });
+    });
+</script>
+</body>
+</html>

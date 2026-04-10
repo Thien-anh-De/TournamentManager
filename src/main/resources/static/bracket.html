@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Sơ Đồ Knockout - Viễn Thông Cup</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .bracket-col { width: 30%; }
+        .match-card { border: 2px solid #0d6efd; border-radius: 8px; padding: 10px; background: white; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .match-card.finished { border-color: #6c757d; background: #f8f9fa; opacity: 0.9; }
+        .team-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #dee2e6; }
+        .team-row:nth-child(2) { border-bottom: none; margin-bottom: 10px; }
+        .team-name { font-weight: bold; font-size: 1.1rem; }
+        .team-score { font-weight: bold; font-size: 1.3rem; color: #dc3545; background: #fff3f3; padding: 0 10px; border-radius: 4px; border: 1px solid #ffc107;}
+        
+        /* Modal Style */
+        .score-input { width: 80px; text-align: center; font-weight: bold; font-size: 1.8rem; border: 2px solid #6c757d; cursor: not-allowed;}
+        .stat-input { width: 55px; text-align: center; padding: 2px; }
+        .table-players td { vertical-align: middle; }
+    </style>
+</head>
+<body class="bg-light pb-5">
+
+<nav class="navbar navbar-dark bg-dark shadow mb-4">
+    <div class="container">
+        <span class="navbar-brand fw-bold">🏆 Viễn Thông Cup</span>
+        <div>
+            <a href="index.html" class="btn btn-outline-light me-2">📊 Ranking</a>
+            <a href="schedule.html" class="btn btn-outline-info me-2 text-white">📅 Lịch Thi Đấu</a>
+            <a href="bracket.html" class="btn btn-warning me-2 fw-bold">⚔️ Knockout</a>
+            <a href="players.html" class="btn btn-outline-danger me-2">🏃 Cầu Thủ & Thống Kê</a>
+            <a href="setup.html" class="btn btn-outline-light">⚙️ Quản Trị</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid px-5">
+    <div class="text-center mb-5 mt-4">
+        <h1 class="text-danger fw-bold">⚔️ VÒNG LOẠI TRỰC TIẾP</h1>
+        <div class="mt-3">
+            <button class="btn btn-danger fw-bold mx-2 shadow-sm" onclick="generateKnockout('generate-quarterfinals')">Tạo Tứ Kết</button>
+            <button class="btn btn-warning fw-bold mx-2 shadow-sm" onclick="generateKnockout('generate-semifinals')">Tạo Bán Kết</button>
+            <button class="btn btn-success fw-bold mx-2 shadow-sm" onclick="generateKnockout('generate-final')">Tạo Chung Kết</button>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-start" style="min-height: 600px;">
+        <div class="bracket-col" id="col-quarter">
+            <h4 class="text-center mb-4 text-primary fw-bold">TỨ KẾT</h4>
+            <div id="quarter-container"></div>
+        </div>
+        
+        <div class="bracket-col" id="col-semi" style="margin-top: 100px;">
+            <h4 class="text-center mb-4 text-warning fw-bold">BÁN KẾT</h4>
+            <div id="semi-container"></div>
+        </div>
+
+        <div class="bracket-col" id="col-final" style="margin-top: 200px;">
+            <h4 class="text-center mb-4 text-success fw-bold">CHUNG KẾT</h4>
+            <div id="final-container"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="matchModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold">⚽ CẬP NHẬT KẾT QUẢ KNOCKOUT</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <input type="hidden" id="modal-match-id">
+                
+                <div class="row align-items-center mb-4 bg-white p-3 rounded shadow-sm border">
+                    <div class="col-4 text-end fs-4 fw-bold text-primary" id="modal-team-a-name">Team A</div>
+                    <div class="col-4 d-flex justify-content-center align-items-center">
+                        <input type="number" id="modal-score-a" class="form-control score-input bg-secondary text-white" value="0" readonly>
+                        <span class="mx-3 fs-3 fw-bold">-</span>
+                        <input type="number" id="modal-score-b" class="form-control score-input bg-secondary text-white" value="0" readonly>
+                    </div>
+                    <div class="col-4 text-start fs-4 fw-bold text-danger" id="modal-team-b-name">Team B</div>
+                </div>
+
+                <div id="penalty-section" class="row mb-3 d-none">
+                    <div class="col-12 text-center">
+                        <h5 class="text-danger fw-bold mt-2">🎯 LOẠT SÚT LUÂN LƯU (PENALTY)</h5>
+                        <p class="text-muted small mb-1">Nhập kết quả Penalty chung cuộc để phân định thắng thua</p>
+                        <div class="d-flex justify-content-center align-items-center">
+                            <input type="number" id="modal-pen-a" class="form-control stat-input border-danger fw-bold text-danger fs-5" value="0" min="0">
+                            <span class="mx-3 fw-bold">-</span>
+                            <input type="number" id="modal-pen-b" class="form-control stat-input border-danger fw-bold text-danger fs-5" value="0" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white fw-bold">Danh sách Team A</div>
+                            <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-sm table-hover table-players mb-0 text-center">
+                                    <thead class="table-light">
+                                        <tr><th>Tên</th><th>⚽</th><th>❌(PL)</th><th>🟨</th><th>🟥</th></tr>
+                                    </thead>
+                                    <tbody id="modal-players-a"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-danger">
+                            <div class="card-header bg-danger text-white fw-bold">Danh sách Team B</div>
+                            <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-sm table-hover table-players mb-0 text-center">
+                                    <thead class="table-light">
+                                        <tr><th>Tên</th><th>⚽</th><th>❌(PL)</th><th>🟨</th><th>🟥</th></tr>
+                                    </thead>
+                                    <tbody id="modal-players-b"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                <button type="button" class="btn btn-success fw-bold px-4" onclick="saveMatchDetails()">💾 Lưu Chốt Kết Quả</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = "http://localhost:8082/api/tournament";
+    let currentPlayersA = [];
+    let currentPlayersB = [];
+
+    // --- TẠO VÒNG ĐẤU ---
+    function generateKnockout(endpoint) {
+        fetch(`${API}/${endpoint}`, { method: 'POST' })
+            .then(async res => {
+                const msg = await res.text();
+                alert(msg);
+                loadBracket(); 
+            })
+            .catch(err => alert("Lỗi kết nối Server!"));
+    }
+
+    // --- TẢI SƠ ĐỒ ---
+    function loadBracket() {
+        Promise.all([
+            fetch(`${API}/matches?stage=QUARTER`).then(r => r.json()),
+            fetch(`${API}/matches?stage=SEMI`).then(r => r.json()),
+            fetch(`${API}/matches?stage=FINAL`).then(r => r.json())
+        ]).then(([quarters, semis, finals]) => {
+            renderColumn('quarter-container', quarters);
+            renderColumn('semi-container', semis);
+            renderColumn('final-container', finals);
+        });
+    }
+
+    // --- VẼ CÁC TRẬN ĐẤU RA CỘT ---
+    function renderColumn(containerId, matches) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        
+        matches.sort((a,b) => a.id.localeCompare(b.id)).forEach(m => {
+            const isFin = m.status === 'FINISHED';
+            const teamAValid = m.teamA != null;
+            const teamBValid = m.teamB != null;
+            const tA = teamAValid ? m.teamA.name : 'Chờ xác định...';
+            const tB = teamBValid ? m.teamB.name : 'Chờ xác định...';
+            
+            // Xử lý hiển thị điểm (Có tính đến penalty)
+            let scoreAStr = '-';
+            let scoreBStr = '-';
+            if (isFin) {
+                if (m.scoreA === m.scoreB && (m.penaltyScoreA > 0 || m.penaltyScoreB > 0)) {
+                    scoreAStr = `${m.scoreA} (${m.penaltyScoreA})`;
+                    scoreBStr = `${m.scoreB} (${m.penaltyScoreB})`;
+                } else {
+                    scoreAStr = m.scoreA;
+                    scoreBStr = m.scoreB;
+                }
+            }
+            
+            container.innerHTML += `
+            <div class="match-card ${isFin ? 'finished' : ''}">
+                <div class="team-row">
+                    <span class="team-name ${teamAValid ? 'text-primary' : 'text-muted'}">${tA}</span>
+                    <span class="team-score" style="font-size: 1.1rem;">${scoreAStr}</span>
+                </div>
+                <div class="team-row">
+                    <span class="team-name ${teamBValid ? 'text-danger' : 'text-muted'}">${tB}</span>
+                    <span class="team-score" style="font-size: 1.1rem;">${scoreBStr}</span>
+                </div>
+                <button class="btn btn-sm w-100 fw-bold ${isFin ? 'btn-secondary' : 'btn-primary'}" 
+                    onclick="openModal('${m.id}', '${teamAValid?m.teamA.id:''}', '${tA}', '${teamBValid?m.teamB.id:''}', '${tB}')"
+                    ${!teamAValid || !teamBValid || isFin ? 'disabled' : ''}>
+                    ${isFin ? 'Đã Chốt Kết Quả' : '⚽ Cập Nhật Chi Tiết'}
+                </button>
+            </div>
+            `;
+        });
+    }
+
+    function openModal(matchId, teamAId, teamAName, teamBId, teamBName) {
+        document.getElementById('modal-match-id').value = matchId;
+        document.getElementById('modal-team-a-name').innerText = teamAName;
+        document.getElementById('modal-team-b-name').innerText = teamBName;
+        document.getElementById('modal-score-a').value = 0;
+        document.getElementById('modal-score-b').value = 0;
+        
+        // Reset và ẩn ô Penalty
+        document.getElementById('penalty-section').classList.add('d-none');
+        document.getElementById('modal-pen-a').value = 0;
+        document.getElementById('modal-pen-b').value = 0;
+        
+        currentPlayersA = []; currentPlayersB = [];
+
+        fetch(`${API}/teams/${teamAId}/players?t=${new Date().getTime()}`).then(res => res.json()).then(players => {
+            renderPlayerRows(players, 'modal-players-a');
+            currentPlayersA = players;
+        });
+
+        fetch(`${API}/teams/${teamBId}/players?t=${new Date().getTime()}`).then(res => res.json()).then(players => {
+            renderPlayerRows(players, 'modal-players-b');
+            currentPlayersB = players;
+        });
+
+        new bootstrap.Modal(document.getElementById('matchModal')).show();
+    }
+
+    function renderPlayerRows(players, elementId) {
+        const tbody = document.getElementById(elementId);
+        tbody.innerHTML = '';
+        if (!players || players.length === 0) return;
+
+        players.sort((a,b) => a.number - b.number).forEach(p => {
+            tbody.innerHTML += `
+            <tr>
+                <td class="text-start small fw-bold">${p.number}. ${p.name}</td>
+                <td><input type="number" id="g-${p.id}" class="form-control stat-input" min="0" value="0" oninput="calculateTotalScore()"></td>
+                <td><input type="number" id="og-${p.id}" class="form-control stat-input" min="0" value="0" oninput="calculateTotalScore()"></td>
+                <td><input type="number" id="y-${p.id}" class="form-control stat-input" min="0" max="2" value="0"></td>
+                <td><input type="number" id="r-${p.id}" class="form-control stat-input" min="0" max="1" value="0"></td>
+            </tr>`;
+        });
+    }
+
+    // --- TÍNH TOÁN ĐIỂM SỐ & KIỂM TRA PENALTY ---
+    function calculateTotalScore() {
+        let sumGoalsA = 0; let sumOwnGoalsA = 0;
+        currentPlayersA.forEach(p => {
+            sumGoalsA += parseInt(document.getElementById(`g-${p.id}`).value) || 0;
+            sumOwnGoalsA += parseInt(document.getElementById(`og-${p.id}`).value) || 0;
+        });
+
+        let sumGoalsB = 0; let sumOwnGoalsB = 0;
+        currentPlayersB.forEach(p => {
+            sumGoalsB += parseInt(document.getElementById(`g-${p.id}`).value) || 0;
+            sumOwnGoalsB += parseInt(document.getElementById(`og-${p.id}`).value) || 0;
+        });
+
+        let finalA = sumGoalsA + sumOwnGoalsB;
+        let finalB = sumGoalsB + sumOwnGoalsA;
+
+        document.getElementById('modal-score-a').value = finalA;
+        document.getElementById('modal-score-b').value = finalB;
+
+        // Bật ô Penalty nếu tỉ số hòa
+        const penSection = document.getElementById('penalty-section');
+        if (finalA === finalB) {
+            penSection.classList.remove('d-none');
+        } else {
+            penSection.classList.add('d-none');
+            document.getElementById('modal-pen-a').value = 0;
+            document.getElementById('modal-pen-b').value = 0;
+        }
+    }
+
+    // --- LƯU TRẬN ĐẤU ---
+    async function saveMatchDetails() {
+        const matchId = document.getElementById('modal-match-id').value;
+        const scoreA = parseInt(document.getElementById('modal-score-a').value) || 0;
+        const scoreB = parseInt(document.getElementById('modal-score-b').value) || 0;
+        const penA = parseInt(document.getElementById('modal-pen-a').value) || 0;
+        const penB = parseInt(document.getElementById('modal-pen-b').value) || 0;
+
+        // Validate Penalty
+        if (scoreA === scoreB && penA === penB) {
+            alert("❌ Trận đấu Knockout hòa! Bạn phải nhập kết quả Penalty có phân định thắng thua (Ví dụ: 4-3).");
+            return;
+        }
+
+        try {
+            // Đẩy cả penA và penB lên Server
+            await fetch(`${API}/match/${matchId}/update?scoreA=${scoreA}&scoreB=${scoreB}&penA=${penA}&penB=${penB}`, { method: 'POST' });
+
+            const updatePromises = [];
+            [...currentPlayersA, ...currentPlayersB].forEach(p => {
+                const g = parseInt(document.getElementById(`g-${p.id}`).value) || 0;
+                const og = parseInt(document.getElementById(`og-${p.id}`).value) || 0;
+                const y = parseInt(document.getElementById(`y-${p.id}`).value) || 0;
+                const r = parseInt(document.getElementById(`r-${p.id}`).value) || 0;
+
+                if(g > 0 || og > 0 || y > 0 || r > 0) {
+                    updatePromises.push(fetch(`${API}/player/update?playerId=${p.id}&goals=${g}&ownGoals=${og}&yellow=${y}&red=${r}`, { method: 'POST' }));
+                }
+            });
+
+            await Promise.all(updatePromises);
+            alert(`✅ Đã lưu kết quả thành công!`);
+            
+            bootstrap.Modal.getInstance(document.getElementById('matchModal')).hide();
+            loadBracket(); 
+        } catch (error) {
+            alert("❌ Lỗi mạng hoặc server!");
+        }
+    }
+
+    // Gọi lần đầu khi mở web
+    window.onload = loadBracket;
+</script>
+</body>
+</html>

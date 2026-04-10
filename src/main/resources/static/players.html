@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh Sách & Thống Kê Cầu Thủ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .stat-box { border-radius: 10px; padding: 15px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s;}
+        .stat-box:hover { transform: translateY(-5px); }
+        .bg-goals { background: linear-gradient(45deg, #198754, #20c997); }
+        .bg-yellow { background: linear-gradient(45deg, #ffc107, #fd7e14); }
+        .bg-red { background: linear-gradient(45deg, #dc3545, #900C3F); }
+        .top-scorer-card { border: 2px solid #ffc107; background: #fffdf5; height: 600px; display: flex; flex-direction: column; }
+        .scrollable-table { overflow-y: auto; flex-grow: 1; }
+        .medal-1 { font-size: 1.5rem; color: gold; }
+    </style>
+</head>
+<body class="bg-light pb-5">
+
+<nav class="navbar navbar-dark bg-dark shadow mb-4">
+    <div class="container">
+        <span class="navbar-brand fw-bold">🏆 Viễn Thông Cup</span>
+        <div>
+            <a href="index.html" class="btn btn-outline-primary me-2">📊 Ranking</a>
+            <a href="schedule.html" class="btn btn-outline-info me-2 text-white fw-bold">📅 Lịch Thi Đấu</a>
+            <a href="bracket.html" class="btn btn-outline-warning me-2">⚔️ Knockout</a>
+            <a href="players.html" class="btn btn-danger me-2">🏃 Cầu Thủ & Thống Kê</a>
+            <a href="setup.html" class="btn btn-outline-light">⚙️ Quản Trị</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid px-4">
+    <div class="row">
+        
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white fw-bold fs-5 text-center">
+                    🔍 THỐNG KÊ CHI TIẾT TỪNG ĐỘI
+                </div>
+                <div class="card-body bg-light">
+                    <div class="row justify-content-center mb-4">
+                        <div class="col-md-8">
+                            <select id="teamSelect" class="form-select form-select-lg shadow-sm border-primary" onchange="loadPlayers()">
+                                <option value="">-- Vui lòng chọn Đội bóng --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="teamDataArea" style="display: none;">
+                        <div class="row text-center mb-4">
+                            <div class="col-md-4 mb-2">
+                                <div class="stat-box bg-goals">
+                                    <h5 class="mb-1">⚽ Tổng Bàn Thắng</h5>
+                                    <h2 class="fw-bold mb-0" id="sumGoals">0</h2>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="stat-box bg-yellow text-dark">
+                                    <h5 class="mb-1">🟨 Tổng Thẻ Vàng</h5>
+                                    <h2 class="fw-bold mb-0" id="sumYellow">0</h2>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="stat-box bg-red">
+                                    <h5 class="mb-1">🟥 Tổng Thẻ Đỏ</h5>
+                                    <h2 class="fw-bold mb-0" id="sumRed">0</h2>
+                                </div>
+                            </div>
+                        </div>
+
+                        <table class="table table-hover table-striped text-center align-middle shadow-sm bg-white rounded">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>SỐ ÁO</th>
+                                    <th class="text-start">TÊN CẦU THỦ</th>
+                                    <th>⚽ BÀN</th>
+                                    <th>❌ PHẢN LƯỚI</th>
+                                    <th class="text-warning">🟨 THẺ VÀNG</th>
+                                    <th class="text-danger">🟥 THẺ ĐỎ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="player-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow top-scorer-card">
+                <div class="card-header bg-warning text-dark fw-bold fs-5 text-center">
+                    🔥 VUA PHÁ LƯỚI TOÀN GIẢI
+                </div>
+                <div class="scrollable-table p-0">
+                    <table class="table table-hover text-center align-middle mb-0">
+                        <thead class="table-light text-muted sticky-top">
+                            <tr>
+                                <th>#</th>
+                                <th class="text-start">CẦU THỦ</th>
+                                <th>⚽</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-scorers-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+    const API = "http://localhost:8082/api/tournament";
+
+    window.onload = () => {
+        loadTeamsForDropdown();
+        loadTopScorers();
+    };
+
+    function loadTeamsForDropdown() {
+        fetch(`${API}/teams`).then(res => res.json()).then(teams => {
+            const select = document.getElementById('teamSelect');
+            teams.forEach(t => select.innerHTML += `<option value="${t.id}">${t.name}</option>`);
+        });
+    }
+
+    function loadPlayers() {
+        const teamId = document.getElementById('teamSelect').value;
+        const dataArea = document.getElementById('teamDataArea');
+        const tbody = document.getElementById('player-table-body');
+
+        if (!teamId) { dataArea.style.display = 'none'; return; }
+
+        fetch(`${API}/teams/${teamId}/players`).then(res => res.json()).then(players => {
+            tbody.innerHTML = '';
+            let totalGoals = 0, totalYellow = 0, totalRed = 0;
+
+            if (players.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-muted py-4">Chưa có dữ liệu.</td></tr>';
+            } else {
+                players.sort((a, b) => a.number - b.number);
+                players.forEach(p => {
+                    totalGoals += p.goals; totalYellow += p.yellowCards; totalRed += p.redCards;
+                    tbody.innerHTML += `
+                    <tr>
+                        <td class="fw-bold fs-5 text-muted">${p.number}</td>
+                        <td class="text-start fw-bold text-primary">${p.name}</td>
+                        <td class="fs-5">${p.goals}</td>
+                        <td class="fs-5 text-secondary">${p.ownGoals}</td>
+                        <td class="fs-5 fw-bold" style="color: #fd7e14;">${p.yellowCards}</td>
+                        <td class="fs-5 fw-bold text-danger">${p.redCards}</td>
+                    </tr>`;
+                });
+            }
+
+            document.getElementById('sumGoals').innerText = totalGoals;
+            document.getElementById('sumYellow').innerText = totalYellow;
+            document.getElementById('sumRed').innerText = totalRed;
+            dataArea.style.display = 'block';
+        });
+    }
+
+    function loadTopScorers() {
+        fetch(`${API}/top-scorers`).then(res => res.json()).then(scorers => {
+            const tbody = document.getElementById('top-scorers-body');
+            tbody.innerHTML = '';
+            
+            if (scorers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-muted py-3">Chưa có bàn thắng nào.</td></tr>';
+                return;
+            }
+
+            // Backend đã xử lý Tie-breaker cực chuẩn, nên Frontend chỉ việc in số thứ tự từ 1 đến hết
+            scorers.forEach((p, index) => {
+                let currentRank = index + 1; // Strict ranking (1, 2, 3, 4...)
+
+                let rankDisplay = currentRank;
+                if (currentRank === 1) rankDisplay = '<span class="medal-1">🥇</span>';
+                else if (currentRank === 2) rankDisplay = '<span class="fs-5">🥈</span>';
+                else if (currentRank === 3) rankDisplay = '<span class="fs-5">🥉</span>';
+
+                let teamName = p.teamName ? p.teamName : 'Cầu thủ tự do';
+
+                tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold align-middle">${rankDisplay}</td>
+                    <td class="text-start">
+                        <div class="fw-bold text-primary">${p.name}</div>
+                        <div class="small text-muted">${teamName}</div>
+                    </td>
+                    <td class="align-middle">
+                        <div class="fs-4 fw-bold text-danger">${p.goals}</div>
+                        <div style="font-size: 0.75rem;" class="mt-1">
+                            <span class="text-warning fw-bold">${p.yellowCards}🟨</span> | 
+                            <span class="text-danger fw-bold">${p.redCards}🟥</span>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+        });
+    }
+</script>
+</body>
+</html>
