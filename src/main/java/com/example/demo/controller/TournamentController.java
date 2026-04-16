@@ -32,17 +32,13 @@ public class TournamentController {
     @Autowired
     private TeamRepository teamRepository;
 
-    // =========================
     // 1. BẢNG XẾP HẠNG
-    // =========================
     @GetMapping("/ranking")
     public List<Team> getRanking() {
         return tournamentService.getRanking();
     }
 
-    // =========================
-    // 2. UPDATE MATCH (ĐÃ THÊM PENALTY)
-    // =========================
+    // 2. UPDATE MATCH
     @PostMapping("/match/{matchId}/update")
     public ResponseEntity<String> updateScore(
             @PathVariable String matchId,
@@ -58,9 +54,7 @@ public class TournamentController {
         }
     }
 
-    // =========================
     // 3. CHIA BẢNG
-    // =========================
     @PostMapping("/auto-group-db")
     public ResponseEntity<String> autoGroupDB(@RequestParam int numGroups) {
         try {
@@ -71,9 +65,7 @@ public class TournamentController {
         }
     }
 
-    // =========================
     // 4. SINH LỊCH (ROUND-ROBIN)
-    // =========================
     @PostMapping("/generate-schedule")
     public ResponseEntity<String> generateSchedule() {
         try {
@@ -84,9 +76,7 @@ public class TournamentController {
         }
     }
 
-    // =========================
-    // 5. VÒNG LOẠI TRỰC TIẾP (KNOCKOUT)
-    // =========================
+    // 5. VÒNG LOẠI TRỰC TIẾP 
     @PostMapping("/generate-quarterfinals")
     public ResponseEntity<String> generateQuarter() {
         try {
@@ -117,49 +107,38 @@ public class TournamentController {
         }
     }
 
-    // =========================
     // 6. LẤY MATCH THEO STAGE
-    // =========================
     @GetMapping("/matches")
     public List<Match> getMatchesByStage(@RequestParam String stage) {
         return matchRepository.findByStage(stage);
     }
 
-    // =========================
-    // 7. CHAMPION 🏆
-    // =========================
+    // 7. CHAMPION
     @GetMapping("/champion")
     public Team getChampion() {
         return tournamentService.getChampion();
     }
 
-    // =========================
-    // 8. TOP SCORER TOÀN GIẢI ⚽
-    // =========================
+
+    // 8. TOP SCORER TOÀN GIẢI 
     @GetMapping("/top-scorers")
     public List<Player> topScorers() {
         return tournamentService.getTopScorers();
     }
 
-    // =========================
     // 9. LẤY TẤT CẢ ĐỘI BÓNG
-    // =========================
     @GetMapping("/teams")
     public List<Team> getAllTeams() {
         return teamRepository.findAll(Sort.by("name"));
     }
 
-    // =========================
     // 10. LẤY CẦU THỦ THEO ĐỘI
-    // =========================
     @GetMapping("/teams/{teamId}/players")
     public List<Player> getPlayersByTeam(@PathVariable String teamId) {
         return playerRepository.findByTeam_Id(teamId);
     }
 
-    // =========================
     // 11. UPDATE PLAYER (Có Phản lưới)
-    // =========================
     @PostMapping("/player/update")
     public ResponseEntity<String> updatePlayer(
             @RequestParam String playerId,
@@ -185,9 +164,7 @@ public class TournamentController {
         }
     }
     
-    // =========================
-    // 12. AUTO MOCK DATA (TỰ ĐỘNG ĐÁ VÒNG BẢNG)
-    // =========================
+    // 12. AUTO MOCK DATA
     @PostMapping("/mock-group-stage")
     public ResponseEntity<String> mockGroupStage() {
         try {

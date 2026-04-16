@@ -17,10 +17,7 @@ INSERT INTO teams (id, name, matches_played, goals_for, goal_difference, points,
 ('T10', 'D25VT8', 0, 0, 0, 0, NULL),
 ('T11', 'DTVT3', 0, 0, 0, 0, NULL),
 ('T12', 'FC VT206', 0, 0, 0, 0, NULL),
-('T13', 'FC VTZone', 0, 0, 0, 0, NULL),
-('T14', 'VT01', 0, 0, 0, 0, NULL),
-('T15', 'VT04', 0, 0, 0, 0, NULL),
-('T16', 'VT6-D25', 0, 0, 0, 0, NULL);
+('T13', 'FC VTZone', 0, 0, 0, 0, NULL);
 
 -- 3. INSERT DANH SÁCH CẦU THỦ (Đã bổ sung cột own_goals = 0)
 INSERT INTO players (id, name, number, goals, own_goals, yellow_cards, red_cards, team_id) VALUES
@@ -223,51 +220,4 @@ INSERT INTO players (id, name, number, goals, own_goals, yellow_cards, red_cards
 ('P172', 'Nguyễn Hoàng Linh', 12, 0, 0, 0, 0, 'T13'),
 ('P173', 'Trần Văn Mạnh', 13, 0, 0, 0, 0, 'T13'),
 ('P174', 'Đinh Tiến Đạt', 14, 0, 0, 0, 0, 'T13'),
-('P175', 'Đỗ Quang Huy', 15, 0, 0, 0, 0, 'T13'),
-
--- Đội 14: VT01 (T14)
-('P176', 'Đặng Thành An', 1, 0, 0, 0, 0, 'T14'),
-('P177', 'Cao Ngọc Thành', 2, 0, 0, 0, 0, 'T14'),
-('P178', 'Trần Mạnh Sơn', 3, 0, 0, 0, 0, 'T14'),
-('P179', 'Trần Bảo Khánh', 4, 0, 0, 0, 0, 'T14'),
-('P180', 'Bùi Hữu Tuấn', 5, 0, 0, 0, 0, 'T14'),
-('P181', 'Nguyễn Doãn Tuấn Anh', 6, 0, 0, 0, 0, 'T14'),
-('P182', 'Bùi Quang Minh', 7, 0, 0, 0, 0, 'T14'),
-('P183', 'Trần Khắc Anh', 8, 0, 0, 0, 0, 'T14'),
-('P184', 'Đỗ Thanh Tùng', 9, 0, 0, 0, 0, 'T14'),
-('P185', 'Đàm Chu Hữu Bình', 10, 0, 0, 0, 0, 'T14'),
-('P186', 'Nguyễn Tiến Dũng', 11, 0, 0, 0, 0, 'T14'),
-('P187', 'Ngô Trường Phong', 12, 0, 0, 0, 0, 'T14'),
-('P188', 'Trịnh Việt Hoàng', 13, 0, 0, 0, 0, 'T14'),
-
--- Đội 15: VT04 (T15)
-('P189', 'Nguyễn Trọng Lương', 1, 0, 0, 0, 0, 'T15'),
-('P190', 'Phạm Quang Trường', 2, 0, 0, 0, 0, 'T15'),
-('P191', 'Phó Đình Huy', 3, 0, 0, 0, 0, 'T15'),
-('P192', 'Nguyễn Minh Hoàng', 4, 0, 0, 0, 0, 'T15'),
-('P193', 'Trần Việt Hùng', 5, 0, 0, 0, 0, 'T15'),
-('P194', 'Phạm Hồng Duy', 6, 0, 0, 0, 0, 'T15'),
-('P195', 'Nguyễn Văn Đạt', 7, 0, 0, 0, 0, 'T15'),
-('P196', 'Vũ Đoàn Đức Anh', 8, 0, 0, 0, 0, 'T15'),
-('P197', 'Nguyễn Công Tâm', 9, 0, 0, 0, 0, 'T15'),
-('P198', 'Đoàn Thanh Cảnh', 10, 0, 0, 0, 0, 'T15'),
-('P199', 'Phạm Gia Khiêm', 11, 0, 0, 0, 0, 'T15'),
-('P200', 'Nguyễn Quang Thiều', 12, 0, 0, 0, 0, 'T15'),
-('P201', 'Phạm Minh Dũng', 13, 0, 0, 0, 0, 'T15'),
-('P202', 'Nguyễn Tuấn Anh', 14, 0, 0, 0, 0, 'T15'),
-
--- Đội 16: VT6-D25 (T16)
-('P203', 'Nguyễn Việt Anh', 1, 0, 0, 0, 0, 'T16'),
-('P204', 'Cao Thái Sơn', 2, 0, 0, 0, 0, 'T16'),
-('P205', 'Đồng Văn Mạnh', 3, 0, 0, 0, 0, 'T16'),
-('P206', 'Nguyễn Nguyên Vũ', 4, 0, 0, 0, 0, 'T16'),
-('P207', 'Nguyễn Hoàng Bách', 5, 0, 0, 0, 0, 'T16'),
-('P208', 'Lê Vũ Tuấn Anh', 6, 0, 0, 0, 0, 'T16'),
-('P209', 'Lê Đình Doanh', 7, 0, 0, 0, 0, 'T16'),
-('P210', 'Trần Đức Anh', 8, 0, 0, 0, 0, 'T16'),
-('P211', 'Phạm Hải Đăng', 9, 0, 0, 0, 0, 'T16'),
-('P212', 'Nguyễn Trần Anh Đức', 10, 0, 0, 0, 0, 'T16'),
-('P213', 'Nguyễn Đình Hiếu', 11, 0, 0, 0, 0, 'T16'),
-('P214', 'Khổng Nhật Minh', 12, 0, 0, 0, 0, 'T16'),
-('P215', 'Nguyễn Phương Nam', 13, 0, 0, 0, 0, 'T16'),
-('P216', 'Phạm Duy Phát', 14, 0, 0, 0, 0, 'T16');
+('P175', 'Đỗ Quang Huy', 15, 0, 0, 0, 0, 'T13');

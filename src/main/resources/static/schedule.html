@@ -105,7 +105,6 @@
         container.innerHTML = '<h5 class="text-center text-muted mt-5">Đang tải lịch thi đấu...</h5>';
         
         try {
-            // Tải song song toàn bộ các vòng đấu
             const [groups, quarters, semis, finals] = await Promise.all([
                 fetch(`${API}/matches?stage=GROUP`).then(r => r.json()),
                 fetch(`${API}/matches?stage=QUARTER`).then(r => r.json()),
@@ -120,7 +119,6 @@
                 return;
             }
 
-            // Render lần lượt từng vòng
             renderStageSection(container, '🔥 VÒNG BẢNG', groups);
             renderStageSection(container, '⚔️ TỨ KẾT', quarters);
             renderStageSection(container, '⚔️ BÁN KẾT', semis);
@@ -131,46 +129,65 @@
         }
     }
 
+    // ĐÃ SỬA LẠI HÀM NÀY ĐỂ GOM NHÓM THEO LƯỢT / NGÀY
     function renderStageSection(container, stageName, matches) {
         if (matches.length === 0) return;
 
-        let html = `<h3 class="round-header shadow-sm text-center bg-dark mt-5">${stageName}</h3><div class="row">`;
-        matches.sort((a, b) => a.id.localeCompare(b.id)); // Sắp xếp theo ID trận
+        let html = `<h3 class="round-header shadow-sm text-center bg-dark mt-5">${stageName}</h3>`;
 
+        // Gom các trận đấu vào từng mảng theo Ngày thi đấu
+        const rounds = {};
         matches.forEach(m => {
-            const isFin = m.status === 'FINISHED';
-            // Knockout chưa xếp giờ thì ghi Chờ cập nhật
-            const timeInfo = m.matchTime ? `⏰ ${m.matchTime}` : '⏰ Chờ cập nhật';
-            const fieldInfo = m.field ? m.field : 'Sân TBD';
-            
-            // Xử lý nếu đội chưa được xác định (do vòng trước chưa đá xong)
-            const teamAValid = m.teamA != null;
-            const teamBValid = m.teamB != null;
-            const teamAName = teamAValid ? m.teamA.name : '???';
-            const teamBName = teamBValid ? m.teamB.name : '???';
-
-            html += `
-            <div class="col-md-6 mb-3">
-                <div class="match-card ${isFin ? 'finished' : ''}">
-                    <div class="d-flex justify-content-between mb-2 text-muted fw-bold small">
-                        <span>${timeInfo}</span>
-                        <span class="badge ${isFin ? 'bg-secondary' : 'bg-success'} fs-6">${fieldInfo}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="fw-bold fs-5 w-25 text-primary text-end">${teamAName}</div>
-                        <div class="fw-bold fs-4 mx-2">${isFin ? `${m.scoreA} - ${m.scoreB}` : 'VS'}</div>
-                        <div class="fw-bold fs-5 w-25 text-danger text-start">${teamBName}</div>
-                    </div>
-                    <button class="btn ${isFin ? 'btn-outline-secondary' : 'btn-primary'} w-100 fw-bold" 
-                        onclick="openModal('${m.id}', '${teamAValid ? m.teamA.id : ''}', '${teamAName}', '${teamBValid ? m.teamB.id : ''}', '${teamBName}')" 
-                        ${isFin || !teamAValid || !teamBValid ? 'disabled' : ''}>
-                        ${isFin ? 'Đã Chốt Kết Quả' : (!teamAValid || !teamBValid ? 'Chờ xác định đội' : '✏️ Cập Nhật Chi Tiết')}
-                    </button>
-                </div>
-            </div>`;
+            const dateStr = m.matchDate || 'Chờ cập nhật';
+            if(!rounds[dateStr]) rounds[dateStr] = [];
+            rounds[dateStr].push(m);
         });
-        
-        html += '</div>';
+
+        let roundNum = 1;
+        for (const [date, roundMatches] of Object.entries(rounds)) {
+            // In tiêu đề Lượt hoặc Ngày
+            if (stageName.includes('VÒNG BẢNG')) {
+                html += `<h4 class="mt-4 mb-3 text-primary fw-bold" style="border-bottom: 2px solid #0d6efd; display: inline-block;">⚽ Lượt ${roundNum} - Ngày ${date}</h4>`;
+            } else {
+                html += `<h4 class="mt-4 mb-3 text-danger fw-bold" style="border-bottom: 2px solid #dc3545; display: inline-block;">📅 Ngày thi đấu: ${date}</h4>`;
+            }
+            
+            html += '<div class="row">';
+            
+            roundMatches.sort((a, b) => a.id.localeCompare(b.id)).forEach(m => {
+                const isFin = m.status === 'FINISHED';
+                const timeInfo = m.matchTime ? `⏰ ${m.matchTime}` : '⏰ Chờ cập nhật';
+                const fieldInfo = m.field ? m.field : 'Sân TBD';
+                
+                const teamAValid = m.teamA != null;
+                const teamBValid = m.teamB != null;
+                const teamAName = teamAValid ? m.teamA.name : '???';
+                const teamBName = teamBValid ? m.teamB.name : '???';
+
+                html += `
+                <div class="col-md-6 mb-3">
+                    <div class="match-card ${isFin ? 'finished' : ''}">
+                        <div class="d-flex justify-content-between mb-2 text-muted fw-bold small">
+                            <span>${timeInfo}</span>
+                            <span class="badge ${isFin ? 'bg-secondary' : 'bg-success'} fs-6">${fieldInfo}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="fw-bold fs-5 w-25 text-primary text-end">${teamAName}</div>
+                            <div class="fw-bold fs-4 mx-2">${isFin ? `${m.scoreA} - ${m.scoreB}` : 'VS'}</div>
+                            <div class="fw-bold fs-5 w-25 text-danger text-start">${teamBName}</div>
+                        </div>
+                        <button class="btn ${isFin ? 'btn-outline-secondary' : 'btn-primary'} w-100 fw-bold" 
+                            onclick="openModal('${m.id}', '${teamAValid ? m.teamA.id : ''}', '${teamAName}', '${teamBValid ? m.teamB.id : ''}', '${teamBName}')" 
+                            ${isFin || !teamAValid || !teamBValid ? 'disabled' : ''}>
+                            ${isFin ? 'Đã Chốt Kết Quả' : (!teamAValid || !teamBValid ? 'Chờ xác định đội' : '✏️ Cập Nhật Chi Tiết')}
+                        </button>
+                    </div>
+                </div>`;
+            });
+            
+            html += '</div>';
+            roundNum++;
+        }
         container.innerHTML += html;
     }
 
@@ -179,14 +196,12 @@
         document.getElementById('modal-team-a-name').innerText = teamAName;
         document.getElementById('modal-team-b-name').innerText = teamBName;
         
-        // Reset tỉ số về 0
         document.getElementById('modal-score-a').value = 0;
         document.getElementById('modal-score-b').value = 0;
         
         currentPlayersA = [];
         currentPlayersB = [];
 
-        // Chống cache bằng getTime()
         fetch(`${API}/teams/${teamAId}/players?t=${new Date().getTime()}`).then(res => res.json()).then(players => {
             renderPlayerRows(players, 'modal-players-a');
             currentPlayersA = players;
@@ -210,7 +225,6 @@
         }
 
         players.sort((a,b) => a.number - b.number).forEach(p => {
-            // ĐÃ THÊM SỰ KIỆN oninput="calculateTotalScore()" VÀO CÁC Ô BÀN THẮNG/PHẢN LƯỚI
             tbody.innerHTML += `
             <tr>
                 <td class="text-start small fw-bold">${p.number}. ${p.name}</td>
@@ -222,9 +236,6 @@
         });
     }
 
-    // ==========================================
-    // HÀM MỚI: TỰ ĐỘNG TÍNH TOÁN TỈ SỐ TRẬN ĐẤU
-    // ==========================================
     function calculateTotalScore() {
         let sumGoalsA = 0; let sumOwnGoalsA = 0;
         currentPlayersA.forEach(p => {
@@ -238,27 +249,21 @@
             sumOwnGoalsB += parseInt(document.getElementById(`og-${p.id}`).value) || 0;
         });
 
-        // Công thức: Bàn Đội A = Cầu thủ A ghi + Cầu thủ B phản lưới
         const finalScoreA = sumGoalsA + sumOwnGoalsB;
         const finalScoreB = sumGoalsB + sumOwnGoalsA;
 
-        // Bắn ngược kết quả lên ô hiển thị ở trên cùng
         document.getElementById('modal-score-a').value = finalScoreA;
         document.getElementById('modal-score-b').value = finalScoreB;
     }
 
     async function saveMatchDetails() {
         const matchId = document.getElementById('modal-match-id').value;
-        
-        // Lấy thẳng tỉ số đã được Auto-Calculate
         const scoreA = parseInt(document.getElementById('modal-score-a').value) || 0;
         const scoreB = parseInt(document.getElementById('modal-score-b').value) || 0;
 
         try {
-            // Lưu kết quả trận đấu
             await fetch(`${API}/match/${matchId}/update?scoreA=${scoreA}&scoreB=${scoreB}`, { method: 'POST' });
 
-            // Lưu chi tiết cầu thủ
             const updatePromises = [];
             [...currentPlayersA, ...currentPlayersB].forEach(p => {
                 const g = parseInt(document.getElementById(`g-${p.id}`).value) || 0;
