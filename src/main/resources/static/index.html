@@ -31,7 +31,6 @@
 fetch("http://localhost:8082/api/tournament/ranking")
     .then(res => res.json())
     .then(data => {
-        // TỰ ĐỘNG GOM NHÓM: Có bao nhiêu bảng tự tạo bấy nhiêu nhóm
         const groups = {};
         data.forEach(team => {
             const gName = team.groupName || 'Chưa chia bảng';
@@ -41,13 +40,11 @@ fetch("http://localhost:8082/api/tournament/ranking")
             groups[gName].push(team);
         });
 
-        // Sắp xếp tên bảng theo thứ tự A, B, C...
         const sortedGroupNames = Object.keys(groups).sort();
 
         const container = document.getElementById('ranking-container');
         container.innerHTML = '';
 
-        // Tự động vẽ HTML cho từng bảng
         sortedGroupNames.forEach(groupName => {
             const teams = groups[groupName];
             let rowsHtml = '';

@@ -138,7 +138,7 @@ public class TournamentController {
         return playerRepository.findByTeam_Id(teamId);
     }
 
-    // 11. UPDATE PLAYER (Có Phản lưới)
+    // 11. UPDATE PLAYER 
     @PostMapping("/player/update")
     public ResponseEntity<String> updatePlayer(
             @RequestParam String playerId,

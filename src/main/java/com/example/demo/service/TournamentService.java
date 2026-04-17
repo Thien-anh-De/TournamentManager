@@ -25,15 +25,12 @@ public class TournamentService {
     @Autowired private MatchRepository matchRepository;
     @Autowired private PlayerRepository playerRepository;
 
-    // ==========================================
-    // HÀM MỚI: TRỌNG TÀI SO SÁNH CÔNG BẰNG (PPG)
-    // Dùng để so sánh các đội KHÁC BẢNG có số trận thi đấu không bằng nhau
-    // ==========================================
+    // Dùng để so sánh các đội KHÁC BẢNG có số trận thi đấu không bằng nhau ( ppg)
     private int compareTeamsFairly(Team a, Team b) {
         // 1. So sánh Điểm trung bình mỗi trận
         double ppgA = a.getMatchesPlayed() > 0 ? (double) a.getPoints() / a.getMatchesPlayed() : 0;
         double ppgB = b.getMatchesPlayed() > 0 ? (double) b.getPoints() / b.getMatchesPlayed() : 0;
-        if (ppgA != ppgB) return Double.compare(ppgB, ppgA); // Xếp giảm dần
+        if (ppgA != ppgB) return Double.compare(ppgB, ppgA); 
 
         // 2. So sánh Hiệu số trung bình mỗi trận
         double gdpgA = a.getMatchesPlayed() > 0 ? (double) a.getGoalDifference() / a.getMatchesPlayed() : 0;
@@ -46,18 +43,15 @@ public class TournamentService {
         return Double.compare(gfpgB, gfpgA);
     }
 
-    // =========================
+   
     // 1. BẢNG XẾP HẠNG
-    // =========================
     public List<Team> getRanking() {
         Sort sort = Sort.by(Sort.Direction.ASC, "groupName")
                 .and(Sort.by(Sort.Direction.DESC, "points", "goalDifference", "goalsFor"));
         return teamRepository.findAll(sort);
     }
 
-    // =========================
     // 2. UPDATE MATCH
-    // =========================
     @Transactional
     public void updateMatchResult(String matchId, int scoreA, int scoreB, int penA, int penB) {
         Match match = matchRepository.findById(matchId).orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy trận!"));
@@ -106,9 +100,7 @@ public class TournamentService {
         return m.getPenaltyScoreA() > m.getPenaltyScoreB() ? m.getTeamA() : m.getTeamB();
     }
 
-    // =========================
     // 3. AUTO NEXT ROUND
-    // =========================
     @Transactional
     public void autoAdvanceNextRound() {
         List<Match> quarters = matchRepository.findByStage("QUARTER");
@@ -142,9 +134,7 @@ public class TournamentService {
         matchRepository.save(m);
     }
 
-    // =========================
     // 4. CHIA BẢNG
-    // =========================
     @Transactional
     public void autoGenerateGroupsFromDB(int numGroups) {
         List<Team> teams = teamRepository.findAll();
@@ -163,9 +153,7 @@ public class TournamentService {
         teamRepository.saveAll(teams);
     }
 
-    // =========================
     // 5. THUẬT TOÁN SINH LỊCH (QUEUE X THỜI GIAN THỰC TẾ)
-    // =========================
     @Transactional
     public void generateSchedule() {
         matchRepository.deleteAll();
@@ -176,7 +164,7 @@ public class TournamentService {
         
         Map<Integer, List<Match>> matchesByRound = new HashMap<>();
 
-        // Bước 1: Sinh ra toàn bộ số trận cần thiết (Vòng lặp Round-Robin)
+        // 1: Sinh ra toàn bộ số trận cần thiết (Vòng lặp Round-Robin)
         for (List<Team> groupTeams : groups.values()) {
             List<Team> teams = new ArrayList<>(groupTeams);
             if (teams.size() < 2) continue;
@@ -206,7 +194,7 @@ public class TournamentService {
             }
         }
 
-        // Bước 2: Nạp toàn bộ vào Hàng đợi (Queue)
+        // 2: Nạp toàn bộ vào Hàng đợi (Queue)
         List<Match> pendingQueue = new ArrayList<>();
         int absoluteMaxRounds = matchesByRound.keySet().stream().max(Integer::compareTo).orElse(0);
         for (int r = 1; r <= absoluteMaxRounds; r++) {
@@ -215,7 +203,7 @@ public class TournamentService {
             }
         }
 
-        // Bước 3: Rải lịch theo Ràng buộc (Chỉ đá T7/CN, Mỗi sân có 4 slot/ngày, Không đá 2 trận/ngày)
+        // 3: Rải lịch theo Ràng buộc (Chỉ đá T7/CN, Mỗi sân có 4 slot/ngày, Không đá 2 trận/ngày)
         String[] fields = {"Sân 1", "Sân 2", "Sân 3", "Sân 4"};
         String[] timeSlots = {"8h30", "10h00", "14h00", "15h30"};
         
@@ -257,7 +245,7 @@ public class TournamentService {
                 }
             }
             
-            // Bước 4: Chuyển sang Ngày cuối tuần tiếp theo
+            //  4: Chuyển sang Ngày cuối tuần tiếp theo
             if (currentDate.getDayOfWeek() == DayOfWeek.SATURDAY) {
                 currentDate = currentDate.plusDays(1); // T7 nhảy sang CN
             } else {
@@ -266,9 +254,7 @@ public class TournamentService {
         }
     }
 
-    // =========================
     // 6. LỌC 8 ĐỘI VÀO KNOCKOUT (HỖ TRỢ 1, 2, 3, 4, 5 BẢNG)
-    // =========================
     public List<Team> getTop8ForQuarter() {
         Map<String, List<Team>> groups = teamRepository.findAll().stream()
                 .filter(t -> t.getGroupName() != null)
@@ -277,7 +263,7 @@ public class TournamentService {
         int numGroups = groups.size();
         List<Team> qualifiedTeams = new ArrayList<>();
 
-        // Bước 1: Sắp xếp nội bộ từng Bảng
+        // 1: Sắp xếp nội bộ từng Bảng
         for (List<Team> groupTeams : groups.values()) {
             groupTeams.sort((a, b) -> {
                 if (b.getPoints() != a.getPoints()) return b.getPoints() - a.getPoints();
@@ -286,7 +272,7 @@ public class TournamentService {
             });
         }
 
-        // Bước 2: Bốc đủ 8 đội theo Thể thức
+        // 2: Bốc đủ 8 đội theo Thể thức
         if (numGroups == 1) {
             // Thể thức 1 Bảng (League)
             for (List<Team> groupTeams : groups.values()) {
@@ -331,9 +317,7 @@ public class TournamentService {
         return qualifiedTeams;
     }
 
-    // =========================
     // 7. KNOCKOUT GENERATORS (HẠT GIỐNG TOÀN GIẢI)
-    // =========================
     @Transactional
     public void generateQuarterFinals() {
         if (!matchRepository.findByStage("QUARTER").isEmpty()) {
@@ -345,7 +329,7 @@ public class TournamentService {
             throw new RuntimeException("Lỗi: Không đủ 8 đội để xếp Tứ kết! Vui lòng đảm bảo hệ thống có đủ ít nhất 8 đội.");
         }
 
-        // BƯỚC ĐỘT PHÁ: Xếp hạng hạt giống toàn giải dựa trên HỆ SỐ TRUNG BÌNH (PPG)
+        // Xếp hạng hạt giống toàn giải dựa trên HỆ SỐ TRUNG BÌNH (PPG)
         top8.sort(this::compareTeamsFairly);
 
         // Bắt cặp tự động theo Hạt giống (Seed 1 vs Seed 8, Seed 2 vs Seed 7...)
@@ -384,18 +368,14 @@ public class TournamentService {
         if (w.size() >= 2) saveKnockoutMatch("FINAL", w.get(0), w.get(1), "FINAL");
     }
 
-    // =========================
     // 8. CHAMPION
-    // =========================
     public Team getChampion() {
         List<Match> finals = matchRepository.findByStage("FINAL");
         if (!finals.isEmpty() && "FINISHED".equals(finals.get(0).getStatus())) return getWinner(finals.get(0));
         return null;
     }
 
-    // =========================
     // 9. TOP SCORER
-    // =========================
     public List<Player> getTopScorers() {
         return playerRepository.findAll().stream()
                 .filter(p -> p.getGoals() > 0)
@@ -413,9 +393,7 @@ public class TournamentService {
                 .collect(Collectors.toList());
     }
 
-    // =========================
     // 10. GIẢ LẬP KẾT QUẢ VÒNG BẢNG (AUTO DEMO)
-    // =========================
     @Transactional
     public void autoMockGroupStage() {
         List<Match> groupMatches = matchRepository.findByStage("GROUP");

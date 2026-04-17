@@ -23,8 +23,6 @@ public class Match {
 
     @Column(name = "score_b")
     private int scoreB = 0;
-
-    // --- MỚI: 2 TRƯỜNG LƯU ĐIỂM SÚT LUÂN LƯU (PENALTY) ---
     @Column(name = "penalty_score_a")
     private int penaltyScoreA = 0;
 

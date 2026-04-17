@@ -24,14 +24,12 @@ public class Team {
 
     private int points = 0;
 
-    // MỚI: Thêm cột phân Bảng (A, B, C, D)
     @Column(name = "group_name", length = 20)
     private String groupName;
 
     public Team() {
     }
 
-    // --- GETTER & SETTER ---
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

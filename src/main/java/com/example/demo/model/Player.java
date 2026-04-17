@@ -25,16 +25,13 @@ public class Player {
     @Column(name = "red_cards")
     private int redCards = 0;
 
-    // THÊM: Phản lưới nhà
     @Column(name = "own_goals")
     private int ownGoals = 0;
 
     @ManyToOne
     @JoinColumn(name = "team_id")
-    @JsonIgnore // THÊM CÁI NÀY ĐỂ WEB KHÔNG BỊ TREO KHI LOAD CẦU THỦ
+    @JsonIgnore 
     private Team team;
-
-    // ===== GETTER SETTER =====
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -60,9 +57,6 @@ public class Player {
     public Team getTeam() { return team; }
     public void setTeam(Team team) { this.team = team; }
 
-    // ==========================================
-    // MỚI: HÀM TRẢ VỀ TÊN ĐỘI BÓNG CHO FRONTEND
-    // ==========================================
     @JsonProperty("teamName")
     public String getTeamName() {
         return this.team != null ? this.team.getName() : "Cầu thủ tự do";

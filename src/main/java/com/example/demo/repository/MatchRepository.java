@@ -9,7 +9,6 @@ import java.util.List;
 @Repository
 public interface MatchRepository extends JpaRepository<Match, String> {
 
-    // Lấy theo vòng đấu (GROUP, QUARTER, SEMI, FINAL)
     List<Match> findByStage(String stage);
 
 }
